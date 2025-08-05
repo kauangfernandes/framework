@@ -6,7 +6,7 @@
         public static function run(){
             \Bootstrap\Autoload\Autoloader::run();
             \Bootstrap\Addons\PhpEnv::run(__DIR_BASE__ . "\\.env");
-            \Bootstrap\Router\Route::run();
+            \Bootstrap\Routes\Route::run();
             return null;
         }
     }

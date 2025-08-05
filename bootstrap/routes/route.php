@@ -1,6 +1,6 @@
 <?php
 
-namespace Bootstrap\Router;
+namespace Bootstrap\Routes;
 
 use \Bootstrap\App\Server;
 use \Bootstrap\App\Request;

@@ -1,5 +1,5 @@
 <?php
-    use Bootstrap\Router\Route;
+    use Bootstrap\Routes\Route;
 
     Route::get("/", [\App\Http\Controllers\IndexController::class, "index"]);
     Route::get("/hello/world", function () {
