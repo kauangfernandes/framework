@@ -5,69 +5,107 @@ namespace Bootstrap\Routes;
 use \Bootstrap\App\Server;
 use \Bootstrap\App\Request;
 
+/**
+ * Classe Router para gerenciamento de rotas.
+ */
 class Route
 {
-    private static array $routes = array('GET' => array(), 'POST' => array(), 'PUT' => array(), 'DELETE' => array());
-    private static string $method = "";
-    private static string $uri = "";
+    public function __construct() {}
 
-    public static function run()
-    {
-        require_once __DIR_APP__ . "routes/web.php";
-        self::$method = Server::getMethod();
-        self::$uri = Server::getUri();
+    // Armazena as rotas registradas por método HTTP.
+    protected static array $routes = ['GET' => [], 'POST' => [], 'DELETE' => [], 'PUT' => []];
 
-        if (!isset(self::$method)) {
-            return false;
-        }
+    // Array (pilha) para armazenar os prefixos de grupo.
+    private static array $prefix = ["/"];
 
-        if (!isset(self::$routes[self::$method][self::$uri])) {
-            return false;
-        }
+    // 
+    private static array $middlewares = [];
 
-        if (isset(self::$routes[self::$method][self::$uri])) {
-            return self::execute(self::$routes[self::$method][self::$uri]);
-        }
-    }
+    //
+    private static string $lastMethod = '';
 
-    public static function execute(array|callable $action)
-    {
-        if (is_callable($action)) {
-            return call_user_func($action);
-        }
-
-        if (is_array($action)) {
-            $controller = $action[0];
-            $method = $action[1];
-
-            if (!class_exists($controller)) {
-                return exit("Controller not found!");
-            }
-            if (!method_exists($controller, $method)) {
-                return exit("Method not found!");
-            }
-
-            $request = new Request;
-            $controller = new $controller;
-            return $controller->$method($request);
-        }
-    }
+    /**
+     * Registra uma rota HTTP GET.
+     * Registra uma rota HTTP POST.
+     * Registra uma rota HTTP DELETE.
+     * Registra uma rota HTTP PUT.
+     * @param string $route A URI da rota.
+     * @param array|callable $action A ação a ser executada.
+     */
 
     public static function get(string $route, array|callable $action)
     {
-        return self::$routes['GET'][$route] = $action;
+        $route = self::formatRoute($route);
+        $route = self::applyPrefix($route);
+        self::$routes['GET'][$route] = $action;
+        return new static;
     }
 
     public static function post(string $route, array|callable $action)
     {
-        return self::$routes['POST'][$route] = $action;
+        $route = self::formatRoute($route);
+        $route = self::applyPrefix($route);
+        self::$routes['POST'][$route] = $action;
+        return new static;
     }
 
-    public static function delete() {}
+    public static function delete(string $route, array|callable $action)
+    {
+        $route = self::formatRoute($route);
+        $route = self::applyPrefix($route);
+        self::$routes['DELETE'][$route] = $action;
+        return new static;
+    }
 
-    public static function put() {}
+    public static function put(string $route, array|callable $action)
+    {
+        $route = self::formatRoute($route);
+        $route = self::applyPrefix($route);
+        self::$routes['PUT'][$route] = $action;
+        return new static;
+    }
 
-    public static function group() {}
+    /**
+     * Formata as rotas registradas.
+     */
+    private static function formatRoute(string $route): string
+    {
+        // Formatar route para lowercase.
+        $route = strtolower($route);
 
-    public static function name() {}
+        // Remove espaços em branco no início e no final da rota.
+        $route = trim($route, '/');
+
+        // Normaliza a rota para remover barras duplas.
+        $route = str_replace('//', '/', $route);
+
+        return $route;
+    }
+
+    private static function applyPrefix(string $route): string
+    {
+        // Verifica se há prefixos de grupo para aplicar.
+        if (!empty(self::$prefix)) {
+            $temp_route = "";
+
+            foreach (self::$prefix as $chave => $prefix) {
+                // Concatena o prefixo com a rota atual.
+                $temp_route = "{$temp_route}{$prefix}";
+
+                if ($prefix != "/") {
+                    // Adiciona uma barra antes do prefixo, se não for a raiz.
+                    $temp_route .= "/";
+                }
+            }
+
+            $route = "{$temp_route}{$route}";
+        }
+
+        return $route;
+    }
+
+
+    public function redirect(String $route, array $parametros = null){
+        return header("location: {$route}");
+    }
 }
